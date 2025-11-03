@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 
 set_seed(42)
 
-print("🚀 Loading dataset...")
+print("Loading dataset...")
 dataset = ReactionDataset("data/Dreher_and_Doyle_input_data.xlsx")
 
 # Split dataset
@@ -33,7 +33,7 @@ for epoch in range(n_epochs):
     print(f"Epoch {epoch+1}/{n_epochs} | Loss: {loss:.4f} | R²: {r2:.4f}")
 
 # Uncertainty Estimation
-print("\n🔮 Running Monte Carlo Dropout for Uncertainty Estimation...")
+print("\nRunning Monte Carlo Dropout for Uncertainty Estimation...")
 mc_preds = mc_dropout_predict(model, test_loader, n_samples=20)
 
 # Collect true labels
