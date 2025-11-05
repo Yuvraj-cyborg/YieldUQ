@@ -1,35 +1,33 @@
+import torch
 import pandas as pd
 from torch_geometric.data import InMemoryDataset
 from src.graph_builder import mol_to_graph
 from tqdm import tqdm
 from pathlib import Path
-
+from torch_geometric.data import Data
 
 class ReactionDataset(InMemoryDataset):
     def __init__(self, csv_path="data/Dreher_and_Doyle_input_data.xlsx", transform=None, pre_transform=None):
         self.csv_path = Path(csv_path)
         super().__init__('.', transform, pre_transform)
-        self.data, self.slices = self.process_data()
+        self.data, self.slices, self.y_mean, self.y_std, self.category_maps = self.process_data()
 
     def process_data(self):
         if not self.csv_path.exists():
             raise FileNotFoundError(f"Dataset not found at {self.csv_path.resolve()}")
 
-        # Load Excel file
         df = pd.read_excel(self.csv_path)
-        print(f"✅ Loaded dataset with columns: {list(df.columns)}")
-        print(f"📦 Total rows: {len(df)}")
+        print(f"Loaded dataset with columns: {list(df.columns)}")
+        print(f"Total rows: {len(df)}")
 
-        # Validate expected columns
         expected = ['Ligand', 'Additive', 'Base', 'Aryl halide', 'Output']
         missing = [c for c in expected if c not in df.columns]
         if missing:
             raise ValueError(f"Missing columns in dataset: {missing}")
 
-        # Drop missing rows
         df = df.dropna(subset=expected)
 
-        # Combine reaction components into a pseudo-SMILES-like token string
+        # Combine reaction components into a single representation string
         df['combined'] = (
             df['Ligand'].astype(str) + '.' +
             df['Additive'].astype(str) + '.' +
@@ -37,22 +35,39 @@ class ReactionDataset(InMemoryDataset):
             df['Aryl halide'].astype(str)
         )
 
-        # Normalize yield (Output)
-        df['yield'] = df['Output'].astype(float)
+        # Normalize target yield
+        y_min, y_max = df["Output"].min(), df["Output"].max()
+        df["yield_norm"] = (df["Output"] - y_min) / (y_max - y_min)
+
+        # Map categorical columns to integer indices
+        category_maps = {}
+        for col in ['Ligand', 'Additive', 'Base', 'Aryl halide']:
+            uniques = sorted(df[col].unique())
+            category_maps[col] = {v: i for i, v in enumerate(uniques)}
+            df[f"{col}_idx"] = df[col].map(category_maps[col])
 
         data_list = []
         for _, row in tqdm(df.iterrows(), total=len(df), desc="🧪 Processing reactions"):
-            smiles = row['combined']
-            y = row['yield']
-            g = mol_to_graph(smiles, y)
-            if g:
-                data_list.append(g)
+            y = torch.tensor([row['yield_norm']], dtype=torch.float)
+            # Placeholder minimal graph (1 node per reaction)
+            x = torch.ones((1, 6))  # dummy node features
+            edge_index = torch.zeros((2, 0), dtype=torch.long)
 
-        if not data_list:
-            raise ValueError("No valid molecule graphs generated — check mol_to_graph().")
+            # store categorical indices as attributes
+            data = Data(
+                x=x,
+                edge_index=edge_index,
+                y=y,
+                ligand_idx=torch.tensor(row["Ligand_idx"]),
+                additive_idx=torch.tensor(row["Additive_idx"]),
+                base_idx=torch.tensor(row["Base_idx"]),
+                aryl_idx=torch.tensor(row["Aryl halide_idx"]),
+            )
+            data_list.append(data)
 
-        print(f"✅ Successfully processed {len(data_list)} reactions.")
-        return self.collate(data_list)
+        data, slices = self.collate(data_list)
+        return data, slices, y_min, y_max, category_maps
+
 
 
 if __name__ == "__main__":

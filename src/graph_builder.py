@@ -2,16 +2,26 @@ from rdkit import Chem
 from torch_geometric.data import Data
 import torch
 
-def mol_to_graph(smiles: str, y: float):
+def atom_features(atom):
+    """Create a richer feature vector for each atom."""
+    return torch.tensor([
+        atom.GetAtomicNum(),           # 0: atomic number
+        atom.GetDegree(),              # 1: number of bonded neighbors
+        atom.GetTotalValence(),        # 2: total valence
+        atom.GetFormalCharge(),        # 3: formal charge
+        atom.GetTotalNumHs(),          # 4: hydrogen count
+        int(atom.GetIsAromatic()),     # 5: aromaticity flag
+    ], dtype=torch.float)
+
+def mol_to_graph(smiles: str, y: torch.Tensor):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
 
-    # Node features (atom number)
-    atom_feats = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
-    x = torch.tensor(atom_feats, dtype=torch.float).unsqueeze(1)
+    # Node feature matrix
+    x = torch.stack([atom_features(atom) for atom in mol.GetAtoms()], dim=0)
 
-    # Edge list (bonds)
+    # Edge index for bonds
     edge_index = [[], []]
     for bond in mol.GetBonds():
         i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
@@ -19,6 +29,5 @@ def mol_to_graph(smiles: str, y: float):
         edge_index[1] += [j, i]
 
     edge_index = torch.tensor(edge_index, dtype=torch.long)
-    y = torch.tensor([y], dtype=torch.float)
 
     return Data(x=x, edge_index=edge_index, y=y)
