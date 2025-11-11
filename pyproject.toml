@@ -1,6 +1,6 @@
 [project]
 name = "yielduq"
-version = "0.1.0"
+version = "0.1.3"
 description = "Uncertainty-Aware Graph Neural Networks for Reaction Yield Prediction"
 authors = [{ name = "Yuvraj Biswal" }]
 readme = "README.md"

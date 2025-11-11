@@ -1,0 +1,36 @@
+======================================================================
+YIELDUQ-GNN MODEL PERFORMANCE SUMMARY
+======================================================================
+
+PREDICTION METRICS:
+--------------------------------------------------
+  R² Score:                  0.883961
+  Mean Absolute Error (MAE): 0.067968
+  Root Mean Squared Error:   0.094553
+  Mean Prediction:           0.319615
+  Std Prediction:            0.249999
+
+UNCERTAINTY METRICS:
+--------------------------------------------------
+  Mean Uncertainty (σ):      0.052100
+  Std Uncertainty:           0.022069
+  Min Uncertainty:           0.008270
+  Max Uncertainty:           0.128776
+  σ-Error Correlation:       0.130875
+
+ERROR DISTRIBUTION:
+--------------------------------------------------
+  Mean Error:                -0.017476
+  Std Error:                 0.092924
+  Max Absolute Error:        0.488576
+  Median Absolute Error:     0.050607
+  90th Percentile Error:     0.146669
+
+DATASET STATISTICS:
+--------------------------------------------------
+  Number of samples:         791
+  True yield range:          [0.000, 1.000]
+  True yield mean:           0.337091
+  True yield std:            0.277570
+
+======================================================================

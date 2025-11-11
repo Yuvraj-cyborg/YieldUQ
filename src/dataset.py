@@ -47,23 +47,37 @@ class ReactionDataset(InMemoryDataset):
             df[f"{col}_idx"] = df[col].map(category_maps[col])
 
         data_list = []
-        for _, row in tqdm(df.iterrows(), total=len(df), desc="🧪 Processing reactions"):
+        for _, row in tqdm(df.iterrows(), total=len(df), desc="Processing reactions"):
             y = torch.tensor([row['yield_norm']], dtype=torch.float)
-            # Placeholder minimal graph (1 node per reaction)
-            x = torch.ones((1, 6))  # dummy node features
-            edge_index = torch.zeros((2, 0), dtype=torch.long)
-
-            # store categorical indices as attributes
-            data = Data(
-                x=x,
-                edge_index=edge_index,
-                y=y,
-                ligand_idx=torch.tensor(row["Ligand_idx"]),
-                additive_idx=torch.tensor(row["Additive_idx"]),
-                base_idx=torch.tensor(row["Base_idx"]),
-                aryl_idx=torch.tensor(row["Aryl halide_idx"]),
-            )
-            data_list.append(data)
+            
+            # Try to parse the combined SMILES string into a graph
+            # Note: use_3d=False by default (3D generation is slow and causes warnings)
+            # Set use_3d=True if you need 3D coordinates for future enhancements
+            combined_smiles = row['combined']
+            graph_data = mol_to_graph(combined_smiles, y, use_3d=False)
+            
+            if graph_data is None:
+                # Fallback: create minimal dummy graph if parsing fails
+                x = torch.ones((1, 6))
+                edge_index = torch.zeros((2, 0), dtype=torch.long)
+                edge_attr = torch.zeros((0, 4), dtype=torch.float)
+                pos = None  # No 3D coords in fallback
+                
+                graph_data = Data(
+                    x=x,
+                    edge_index=edge_index,
+                    edge_attr=edge_attr,
+                    pos=pos,
+                    y=y
+                )
+            
+            # Add categorical indices as attributes
+            graph_data.ligand_idx = torch.tensor(row["Ligand_idx"])
+            graph_data.additive_idx = torch.tensor(row["Additive_idx"])
+            graph_data.base_idx = torch.tensor(row["Base_idx"])
+            graph_data.aryl_idx = torch.tensor(row["Aryl halide_idx"])
+            
+            data_list.append(graph_data)
 
         data, slices = self.collate(data_list)
         return data, slices, y_min, y_max, category_maps
@@ -71,8 +85,8 @@ class ReactionDataset(InMemoryDataset):
 
 
 if __name__ == "__main__":
-    print("🔬 Loading reaction dataset...")
+    print("Loading reaction dataset...")
     dataset = ReactionDataset("data/Dreher_and_Doyle_input_data.xlsx")
-    print(f"✅ Dataset loaded successfully.")
+    print(f"Dataset loaded successfully.")
     print(f"Total samples: {len(dataset)}")
     print(f"Example graph data object:\n{dataset[0]}")
