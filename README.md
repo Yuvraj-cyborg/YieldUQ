@@ -2,13 +2,13 @@
 
 
 
-**Graph Neural Networks with Quantified Uncertainty for Cross-Coupling Reaction Optimization**[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+**Graph Neural Networks with Quantified Uncertainty for Cross-Coupling Reaction Optimization**
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9+-red.svg)](https://pytorch.org/)
 
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)[![PyTorch Geometric](https://img.shields.io/badge/PyG-2.7+-green.svg)](https://pytorch-geometric.readthedocs.io/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/) [![PyTorch Geometric](https://img.shields.io/badge/PyG-2.7+-green.svg)](https://pytorch-geometric.readthedocs.io/)
 
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.9+-red.svg)](https://pytorch.org/)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.9+-red.svg)](https://pytorch.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [![PyTorch Geometric](https://img.shields.io/badge/PyG-2.7+-green.svg)](https://pytorch-geometric.readthedocs.io/)
 
