@@ -32,7 +32,7 @@ def main():
     set_seed(args.seed)
     
     if not os.path.exists(args.checkpoint):
-        print(f"❌ Checkpoint not found: {args.checkpoint}")
+        print(f"Checkpoint not found: {args.checkpoint}")
         print("\nAvailable checkpoints:")
         if os.path.exists('checkpoints'):
             for f in sorted(os.listdir('checkpoints')):
@@ -115,7 +115,7 @@ def main():
     # Load weights
     model.load_state_dict(state_dict)
     model.eval()
-    print("\n✅ Model loaded successfully!")
+    print("\nModel loaded successfully!")
     
     # Collect true labels
     y_true = []
