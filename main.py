@@ -47,9 +47,7 @@ for batch in test_loader:
 
 analyze_uncertainty(mc_preds, y_true)
 
+# Generate comprehensive visualization report
+from src.visualize import create_comprehensive_report
 
-from src.visualize import visualize_uncertainty, visualize_error_distribution
-
-# Visualize results
-visualize_uncertainty(y_true, mc_preds, save_path="plots/yield_uncertainty.png")
-visualize_error_distribution(y_true, mc_preds)
+create_comprehensive_report(y_true, mc_preds, save_dir='plots')
