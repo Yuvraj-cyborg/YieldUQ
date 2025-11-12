@@ -10,26 +10,33 @@ plt.rcParams['font.sans-serif'] = ['Arial', 'Helvetica', 'DejaVu Sans']
 sns.set_palette("husl")
 
 
-def visualize_all_results(y_true, mc_preds, title_suffix=""):
+def visualize_all_results(y_true, mc_preds, title_suffix="", save_dir="plots"):
     """
     Visualize model performance with 4 essential diagnostic plots.
+    Each plot is saved as a separate file.
     
     Args:
         y_true: True yield values (list or array)
         mc_preds: MC dropout predictions of shape (n_mc_samples, n_test_samples)
                   OR tuple of (mean_preds, std_preds) for heteroscedastic
         title_suffix: Optional suffix to add to plot titles
+        save_dir: Directory to save plots (default: 'plots')
     """
+    import os
+    os.makedirs(save_dir, exist_ok=True)
+    
     # Handle both MC Dropout format and heteroscedastic format
     if isinstance(mc_preds, tuple):
         mean_preds, std_preds = mc_preds
         mean_preds = np.array(mean_preds)
         std_preds = np.array(std_preds)
+        method_name = "heteroscedastic"
     else:
         if isinstance(mc_preds, torch.Tensor):
             mc_preds = mc_preds.detach().cpu().numpy()
         mean_preds = np.mean(mc_preds, axis=0)
         std_preds = np.std(mc_preds, axis=0)
+        method_name = "mc_dropout"
     
     errors = np.abs(mean_preds - np.array(y_true))
     residuals = mean_preds - np.array(y_true)
@@ -40,11 +47,9 @@ def visualize_all_results(y_true, mc_preds, title_suffix=""):
     r2 = 1 - np.sum(residuals**2) / np.sum((np.array(y_true) - np.mean(y_true))**2)
     correlation = np.corrcoef(std_preds, errors)[0, 1]
     
-    # Create 2x2 subplot figure with 4 essential diagnostic plots
-    fig = plt.figure(figsize=(14, 11))
-    
     # PLOT 1: Predicted vs True Yield (with uncertainty color-coding)
-    ax1 = plt.subplot(2, 2, 1)
+    fig1 = plt.figure(figsize=(7, 6))
+    ax1 = fig1.add_subplot(111)
     scatter1 = ax1.scatter(y_true, mean_preds, c=std_preds, cmap='RdYlGn_r',
                            s=80, alpha=0.75, edgecolors='black', linewidth=0.5)
     ax1.plot([0, 1], [0, 1], 'k--', lw=2.5, label='Perfect Prediction', alpha=0.7)
@@ -63,9 +68,13 @@ def visualize_all_results(y_true, mc_preds, title_suffix=""):
     ax1.set_xlim(-0.05, 1.05)
     ax1.set_ylim(-0.05, 1.05)
     ax1.set_aspect('equal')
+    plt.tight_layout()
+    plt.savefig(f'{save_dir}/1_prediction_accuracy_{method_name}.png', dpi=300, bbox_inches='tight')
+    plt.close(fig1)
     
     # PLOT 2: Uncertainty-Error Correlation (diagnostic for calibration quality)
-    ax2 = plt.subplot(2, 2, 2)
+    fig2 = plt.figure(figsize=(7, 6))
+    ax2 = fig2.add_subplot(111)
     slope, intercept, r_value, p_value, std_err = stats.linregress(std_preds, errors)
     line_x = np.linspace(std_preds.min(), std_preds.max(), 100)
     line_y = slope * line_x + intercept
@@ -84,9 +93,13 @@ def visualize_all_results(y_true, mc_preds, title_suffix=""):
              verticalalignment='top', bbox=props2, family='monospace')
     ax2.grid(alpha=0.25, linestyle=':', linewidth=0.8)
     ax2.legend(loc='lower right', fontsize=9, framealpha=0.9)
+    plt.tight_layout()
+    plt.savefig(f'{save_dir}/2_uncertainty_calibration_{method_name}.png', dpi=300, bbox_inches='tight')
+    plt.close(fig2)
     
-    # PLOT 3: Residual Distribution (check for systematic biases)
-    ax3 = plt.subplot(2, 2, 3)
+    # PLOT 3: Residual Distribution (ALEATORIC UNCERTAINTY - shows inherent data noise)
+    fig3 = plt.figure(figsize=(7, 6))
+    ax3 = fig3.add_subplot(111)
     ax3.hist(residuals, bins=40, alpha=0.7, color='steelblue', edgecolor='black', linewidth=0.8)
     ax3.axvline(0, color='red', linestyle='--', lw=2.5, label='Zero Residual', alpha=0.9)
     mu_res = np.mean(residuals)
@@ -100,16 +113,20 @@ def visualize_all_results(y_true, mc_preds, title_suffix=""):
     
     ax3.set_xlabel('Residual (Predicted - True)', fontsize=11)
     ax3.set_ylabel('Frequency', fontsize=11)
-    ax3.set_title(f'Residual Distribution {title_suffix}', fontsize=12, weight='bold')
+    ax3.set_title(f'Aleatoric Uncertainty Distribution {title_suffix}', fontsize=12, weight='bold')
     textstr3 = f'Mean: {mu_res:.4f}\nStd Dev: {sigma_res:.4f}\nSkewness: {stats.skew(residuals):.3f}'
     props3 = dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='black', linewidth=1.5)
     ax3.text(0.05, 0.95, textstr3, transform=ax3.transAxes, fontsize=10,
              verticalalignment='top', bbox=props3, family='monospace')
     ax3.grid(alpha=0.25, linestyle=':', linewidth=0.8, axis='y')
     ax3.legend(loc='upper right', fontsize=9, framealpha=0.9)
+    plt.tight_layout()
+    plt.savefig(f'{save_dir}/3_aleatoric_uncertainty_{method_name}.png', dpi=300, bbox_inches='tight')
+    plt.close(fig3)
     
     # PLOT 4: Binned Calibration Curve (expected calibration error visualization)
-    ax4 = plt.subplot(2, 2, 4)
+    fig4 = plt.figure(figsize=(7, 6))
+    ax4 = fig4.add_subplot(111)
     n_bins = 10
     sort_idx = np.argsort(std_preds)
     std_sorted = std_preds[sort_idx]
@@ -138,8 +155,9 @@ def visualize_all_results(y_true, mc_preds, title_suffix=""):
     ax4.grid(alpha=0.25, linestyle=':', linewidth=0.8)
     ax4.legend(loc='upper left', fontsize=9, framealpha=0.9)
     ax4.set_aspect('equal')
-    
-    plt.tight_layout(pad=2.5)
+    plt.tight_layout()
+    plt.savefig(f'{save_dir}/4_calibration_curve_{method_name}.png', dpi=300, bbox_inches='tight')
+    plt.close(fig4)
     
     # Print summary to console
     print("\n" + "="*80)
@@ -153,12 +171,16 @@ def visualize_all_results(y_true, mc_preds, title_suffix=""):
     print(f"  Expected Calibration Error:  {ece:.6f}")
     print(f"  Residual Mean:               {np.mean(residuals):.6f}")
     print(f"  Residual Std Dev:            {np.std(residuals):.6f}")
+    print("="*80)
+    print(f"\n  Plots saved to '{save_dir}/' directory:")
+    print(f"    - 1_prediction_accuracy_{method_name}.png")
+    print(f"    - 2_uncertainty_calibration_{method_name}.png")
+    print(f"    - 3_aleatoric_uncertainty_{method_name}.png (Residual Distribution)")
+    print(f"    - 4_calibration_curve_{method_name}.png")
     print("="*80 + "\n")
-    
-    plt.show()
 
 
-def compare_uncertainty_methods(y_true, results_list, method_names):
+def compare_uncertainty_methods(y_true, results_list, method_names, save_dir="plots"):
     """
     Compare different uncertainty quantification methods in a compact view.
     
@@ -166,7 +188,11 @@ def compare_uncertainty_methods(y_true, results_list, method_names):
         y_true: True yield values
         results_list: List of result dicts from analyze_uncertainty
         method_names: List of method names
+        save_dir: Directory to save plots (default: 'plots')
     """
+    import os
+    os.makedirs(save_dir, exist_ok=True)
+    
     n_methods = len(results_list)
     fig, axes = plt.subplots(1, n_methods, figsize=(6*n_methods, 5.5))
     
@@ -200,7 +226,8 @@ def compare_uncertainty_methods(y_true, results_list, method_names):
         ax.set_aspect('equal')
     
     plt.tight_layout(pad=2.0)
-    plt.show()
+    plt.savefig(f'{save_dir}/5_method_comparison.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
     
     # Print comparison table
     print("\n" + "="*110)
@@ -212,4 +239,6 @@ def compare_uncertainty_methods(y_true, results_list, method_names):
         print(f"{method_name:<22} {results['r2']:<10.4f} {results['mae']:<10.4f} "
               f"{results['rmse']:<10.4f} {results['correlation']:<13.4f} "
               f"{results['calibrated_ece']:<12.5f}")
+    print("="*110)
+    print(f"\n  Comparison plot saved to '{save_dir}/5_method_comparison.png'")
     print("="*110 + "\n")
