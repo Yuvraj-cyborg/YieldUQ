@@ -1,5 +1,4 @@
-# YieldUQ-GNN: Uncertainty-Aware Chemical Reaction Yield Prediction# YieldUQ-GNN: Uncertainty-Aware Graph Neural Networks for Chemical Reaction Yield Prediction
-
+# YieldUQ-GNN: Uncertainty-Aware Chemical Reaction Yield Prediction
 
 
 **Graph Neural Networks with Quantified Uncertainty for Cross-Coupling Reaction Optimization**
