@@ -9,8 +9,6 @@
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9+-red.svg)](https://pytorch.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![PyTorch Geometric](https://img.shields.io/badge/PyG-2.7+-green.svg)](https://pytorch-geometric.readthedocs.io/)
-
 > **A deep learning framework that predicts chemical reaction yields with uncertainty quantification using Graph Neural Networks and Monte Carlo Dropout.**
 
 ---
@@ -111,7 +109,7 @@ This will:
 
 ---
 
-## 📈 Visualization Outputs
+## Visualization Outputs
 
 ### 1. True vs Predicted Yield with Uncertainty
 
@@ -137,7 +135,7 @@ This will:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 YieldUQ-GNN/
